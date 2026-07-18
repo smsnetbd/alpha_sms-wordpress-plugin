@@ -168,7 +168,7 @@ class Alpha_sms_Public
                 plugin_dir_url(__FILE__) . 'js/alpha_sms-public.js',
                 ['jquery'],
                 $this->version,
-                false
+                true
             );
 
             // adding a js variable for ajax form submit url
