@@ -1,8 +1,8 @@
 /* For Woocommerce page login and registration code */
 
-window.$ = jQuery;
+(function ($) {
 
-let form,
+var form,
    wc_reg_form,
    alert_wrapper,
    checkout_form,
@@ -22,12 +22,12 @@ $(function () {
 
    // Perform AJAX login on form submit
    if (otp_input.length) {
-      form = otp_input.parent('form.woocommerce-form-login.login');
+      form = otp_input.closest('form.woocommerce-form-login.login');
       form.find(':submit').on('click', WC_Login_SendOtp);
    }
 
    if (otp_input_reg.length) {
-      wc_reg_form = otp_input_reg.parent('form.woocommerce-form-register.register');
+      wc_reg_form = otp_input_reg.closest('form.woocommerce-form-register.register');
       wc_reg_form.find(':submit').on('click', WC_Reg_SendOtp);
    }
 
@@ -38,14 +38,25 @@ $(function () {
    $(document.body).on('updated_checkout', initializeCheckoutSubmitProxy);
 });
 
-// Error template
 function showError(msg) {
-   return `<ul class="woocommerce-error" role="alert"><li>${msg}</li></ul></div>`;
+   var el = document.createElement('ul');
+   el.className = 'woocommerce-error';
+   el.setAttribute('role', 'alert');
+   var li = document.createElement('li');
+   li.textContent = msg;
+   el.appendChild(li);
+   return el;
 }
 
-// Error template
 function showSuccess(msg) {
-   return `<ul class="woocommerce-message" role="alert" style="border-left: 3px solid #00a32a"><li>${msg}</li></ul></div>`;
+   var el = document.createElement('ul');
+   el.className = 'woocommerce-message';
+   el.setAttribute('role', 'alert');
+   el.style.borderLeft = '3px solid #00a32a';
+   var li = document.createElement('li');
+   li.textContent = msg;
+   el.appendChild(li);
+   return el;
 }
 
 // ajax send otp for woocommerce login
@@ -53,8 +64,8 @@ function WC_Login_SendOtp(e) {
    if (e) e.preventDefault();
    alert_wrapper.html('');
 
-   let username = form.find('#username').val();
-   let password = form.find('#password').val();
+   var username = form.find('#username').val();
+   var password = form.find('#password').val();
 
    if (!username || !password) {
       alert_wrapper.html(showError('Fill in the required fields.'));
@@ -68,8 +79,8 @@ function WC_Login_SendOtp(e) {
       .val('Processing')
       .text('Processing');
 
-   let data = {
-      action: 'alpha_sms_to_save_and_send_otp_login', //calls wp_ajax_nopriv_alpha_sms_to_save_and_send_otp_login
+   var data = {
+      action: 'alpha_sms_to_save_and_send_otp_login',
       log: form.find('#username').val(),
       pwd: form.find('#password').val(),
       rememberme: form.find('#rememberme').val(),
@@ -87,7 +98,7 @@ function WC_Login_SendOtp(e) {
             timer(
                'resend_otp',
                120,
-               `<a href="javascript:WC_Login_SendOtp()">Resend OTP</a>`
+               '<a href="javascript:void(0)" onclick="window._alphaSmsWcLoginResend()">Resend OTP</a>'
             );
          } else if (resp.status === 402) {
             // no phone number found
@@ -101,18 +112,18 @@ function WC_Login_SendOtp(e) {
       },
       'json'
    )
-      .fail(() =>
+      .fail(function () {
          alert_wrapper.html(
             showError('OTP verification request failed. Please try again later')
-         )
-      )
-      .done(() =>
+         );
+      })
+      .done(function () {
          form
             .find(':submit')
             .prop('disabled', false)
             .val('Log In')
-            .text('Log In')
-      );
+            .text('Log In');
+      });
 }
 
 // ajax send otp for woocommerce registration
@@ -120,11 +131,11 @@ function WC_Reg_SendOtp(e) {
    if (e) e.preventDefault();
    alert_wrapper.html('');
 
-   let phone = wc_reg_form.find('#reg_billing_phone').val();
-   let email = wc_reg_form.find('#reg_email').val() || '';
-   let password = wc_reg_form.find('#reg_password').val();
-   let wc_reg_phone_nonce = wc_reg_form.find('#wc_reg_phone_nonce').val();
-   let action_type = wc_reg_form.find('#action_type').val();
+   var phone = wc_reg_form.find('#reg_billing_phone').val();
+   var email = wc_reg_form.find('#reg_email').val() || '';
+   var password = wc_reg_form.find('#reg_password').val();
+   var wc_reg_phone_nonce = wc_reg_form.find('#wc_reg_phone_nonce').val();
+   var action_type = wc_reg_form.find('#action_type').val();
 
    if (!phone) {
       alert_wrapper.html(showError('Fill in the required fields.'));
@@ -138,8 +149,8 @@ function WC_Reg_SendOtp(e) {
       .val('Processing')
       .text('Processing');
 
-   let data = {
-      action: 'wc_send_otp', //calls wp_ajax_nopriv_wc_send_otp
+   var data = {
+      action: 'wc_send_otp',
       billing_phone: phone,
       email: email,
       wc_reg_phone_nonce: wc_reg_phone_nonce,
@@ -161,7 +172,7 @@ function WC_Reg_SendOtp(e) {
             timer(
                'wc_resend_otp',
                120,
-               `<a href="javascript:WC_Reg_SendOtp()">Resend OTP</a>`
+               '<a href="javascript:void(0)" onclick="window._alphaSmsWcRegResend()">Resend OTP</a>'
             );
          } else {
             // wrong user name pass/sms api error
@@ -170,18 +181,18 @@ function WC_Reg_SendOtp(e) {
       },
       'json'
    )
-      .fail(() =>
+      .fail(function () {
          alert_wrapper.html(
             showError('Something went wrong. Please try again later')
-         )
-      )
-      .done(() =>
+         );
+      })
+      .done(function () {
          wc_reg_form
             .find(':submit')
             .prop('disabled', false)
             .val('Register')
-            .text('Register')
-      );
+            .text('Register');
+      });
 }
 
 // ajax send otp if checkout account creation is enabled
@@ -195,8 +206,8 @@ function WC_Checkout_SendOtp(e) {
       return;
    }
 
-   const phoneField = checkout_form.find('#billing_phone');
-   const phone = phoneField.val();
+   var phoneField = checkout_form.find('#billing_phone');
+   var phone = phoneField.val();
 
    if (!phone) {
       alert_wrapper.html(showError('Fill in the required fields.'));
@@ -209,7 +220,7 @@ function WC_Checkout_SendOtp(e) {
       setCheckoutButtonLabel(checkout_proxy_button, 'Processing');
    }
 
-   const data = {
+   var data = {
       action: 'wc_send_otp',
       billing_phone: phone,
       action_type: checkout_form.find('#action_type').val(),
@@ -228,7 +239,7 @@ function WC_Checkout_SendOtp(e) {
             timer(
                'wc_checkout_resend_otp',
                120,
-               `<a href="javascript:WC_Checkout_SendOtp()">Resend OTP</a>`
+               '<a href="javascript:void(0)" onclick="window._alphaSmsCheckoutResend()">Resend OTP</a>'
             );
          } else {
             alert_wrapper.html(showError(resp.message));
@@ -251,7 +262,7 @@ function WC_Checkout_SendOtp(e) {
 
          if (checkout_proxy_button && checkout_proxy_button.length) {
             checkout_proxy_button.prop('disabled', false);
-            const defaultLabel =
+            var defaultLabel =
                checkout_proxy_button.data('alphaSmsOriginalLabel') ||
                getCheckoutButtonLabel(checkout_submit_button);
             setCheckoutButtonLabel(checkout_proxy_button, defaultLabel);
@@ -285,17 +296,17 @@ function getCheckoutForm() {
    return checkout_form;
 }
 
-function findCheckoutSubmitButton(form) {
-   if (!form || !form.length) {
+function findCheckoutSubmitButton(targetForm) {
+   if (!targetForm || !targetForm.length) {
       return $();
    }
 
-   let button = form
+   var button = targetForm
       .find('[name="woocommerce_checkout_place_order"][type="submit"]')
       .last();
 
    if (!button.length) {
-      button = form.find('button[type="submit"], input[type="submit"]').last();
+      button = targetForm.find('button[type="submit"], input[type="submit"]').last();
    }
 
    return button;
@@ -318,26 +329,26 @@ function setCheckoutButtonLabel(button, label) {
       return;
    }
 
-   const safeLabel = label !== undefined && label !== null ? label : '';
+   var safeLabel = label !== undefined && label !== null ? label : '';
 
    if (button.is('input')) {
       button.val(safeLabel);
       return;
    }
 
-   button.html(safeLabel);
+   button.text(safeLabel);
 }
 
 function copyCheckoutButtonAttributes(originalButton, proxyButton) {
-   const originalNode = originalButton.get(0);
+   var originalNode = originalButton.get(0);
 
    if (!originalNode || !originalNode.attributes) {
       return;
    }
 
    $.each(originalNode.attributes, function () {
-      const attributeName = this.name;
-      const attributeValue = this.value;
+      var attributeName = this.name;
+      var attributeValue = this.value;
 
       if (
          !attributeName ||
@@ -366,25 +377,25 @@ function copyCheckoutButtonStyles(originalButton, proxyButton) {
       return;
    }
 
-   const originalNode = originalButton.get(0);
-   const proxyNode = proxyButton.get(0);
+   var originalNode = originalButton.get(0);
+   var proxyNode = proxyButton.get(0);
 
    if (!originalNode || !proxyNode) {
       return;
    }
 
-   const computed = window.getComputedStyle(originalNode);
+   var computed = window.getComputedStyle(originalNode);
 
    proxyNode.style.cssText = '';
 
-   for (let i = 0; i < computed.length; i++) {
-      const propertyName = computed[i];
+   for (var i = 0; i < computed.length; i++) {
+      var propertyName = computed[i];
 
       if (!propertyName) {
          continue;
       }
 
-      const value = computed.getPropertyValue(propertyName);
+      var value = computed.getPropertyValue(propertyName);
 
       if (!value || (propertyName === 'display' && value === 'none')) {
          continue;
@@ -403,7 +414,7 @@ function createCheckoutProxyButton(originalButton) {
       return null;
    }
 
-   let proxyButton;
+   var proxyButton;
 
    if (originalButton.is('input')) {
       proxyButton = $('<input type="button" />');
@@ -413,7 +424,7 @@ function createCheckoutProxyButton(originalButton) {
 
    copyCheckoutButtonAttributes(originalButton, proxyButton);
 
-   const defaultLabel = getCheckoutButtonLabel(originalButton);
+   var defaultLabel = getCheckoutButtonLabel(originalButton);
 
    proxyButton.data('alphaSmsOriginalLabel', defaultLabel);
    setCheckoutButtonLabel(proxyButton, defaultLabel);
@@ -455,7 +466,7 @@ function initializeCheckoutSubmitProxy() {
       return;
    }
 
-   const originalButton = findCheckoutSubmitButton(checkout_form);
+   var originalButton = findCheckoutSubmitButton(checkout_form);
 
    if (!originalButton.length) {
       return;
@@ -481,13 +492,14 @@ function initializeCheckoutSubmitProxy() {
    checkout_submit_button.hide();
 }
 
-function timer(displayID, remaining, timeoutEl = '') {
-   let m = Math.floor(remaining / 60);
-   let s = remaining % 60;
+function timer(displayID, remaining, timeoutEl) {
+   if (timeoutEl === undefined) timeoutEl = '';
+   var m = Math.floor(remaining / 60);
+   var s = remaining % 60;
 
    m = m < 10 ? '0' + m : m;
    s = s < 10 ? '0' + s : s;
-   document.getElementById(displayID).innerHTML = m + ':' + s;
+   document.getElementById(displayID).textContent = m + ':' + s;
    remaining -= 1;
 
    if (remaining >= 0) {
@@ -496,6 +508,12 @@ function timer(displayID, remaining, timeoutEl = '') {
       }, 1000);
       return;
    }
-   // Do timeout stuff here
    document.getElementById(displayID).innerHTML = timeoutEl;
 }
+
+// Expose resend functions for timer callback links
+window._alphaSmsWcLoginResend = function () { WC_Login_SendOtp(); };
+window._alphaSmsWcRegResend = function () { WC_Reg_SendOtp(); };
+window._alphaSmsCheckoutResend = function () { WC_Checkout_SendOtp(); };
+
+})(jQuery);
